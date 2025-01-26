@@ -108,12 +108,66 @@ class MySQLConnector:
         return result
 
     @staticmethod
-    def view_orders(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    def view_orders(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])) -> tuple | None:
+        if dto.user_id is not None:
+            try:
+                dto.cursor.execute("SELECT * FROM Orders WHERE client_sender=%s", (dto.user_id, ))
+                result = dto.cursor.fetchall()
+            except mysql.connector.errors:
+                logger.error("Error get orders data from database")
+                return None
+            else:
+                if result is not None:
+                    return result
+                else:
+                    return ()
+        else:
+            try:
+                dto.cursor.execute("SELECT * FROM Orders")
+                result = dto.cursor.fetchall()
+            except mysql.connector.errors as err:
+                logger.error("Error get orders data from database")
+                return None
+            else:
+                if result is not None:
+                    return result
+                else:
+                    return ()
+
+    @staticmethod
+    def view_orders_by_user(dto: namedtuple('dto', ['user_id', 'connection', 'cursor'])) -> tuple | None:
+        sql_request = ("SELECT "
+                       "Orders.id, Orders.id_voyage, Clients.fio, Clients.number, Orders.weight, "
+                       "Tariffs.type_of_product, Tariffs.price, "
+                       "GROUP_CONCAT(aas.service_name) AS additional_services "
+                       "FROM Orders "
+                       "INNER JOIN Clients ON Orders.client_recipient = Clients.id "
+                       "INNER JOIN Tariffs ON Orders.id_tariff = Tariffs.id "
+                       "LEFT JOIN OrdersAndAdditionalServices oas ON Orders.id = oas.id_order "
+                       "LEFT JOIN AdditionalServices aas ON oas.id_additional_service = aas.id "
+                       "WHERE Orders.client_sender = %s "
+                       "GROUP BY Orders.id, Orders.id_voyage, Clients.fio, Clients.number, "
+                       "Orders.weight, Tariffs.type_of_product, Tariffs.price "
+                       "ORDER BY Orders.id DESC;")
         try:
-            dto.cursor.execute("SELECT * FROM Orders WHERE client_sender=%s", (dto.user_id, ))
+            dto.cursor.execute(sql_request, (dto.user_id,))
             result = dto.cursor.fetchall()
         except mysql.connector.errors as err:
-            logger.error("Error get orders data from database")
+            logger.error(f"Error get orders data from database\n{err}")
+            return None
+        else:
+            if result is not None:
+                return result
+            else:
+                return ()
+
+    @staticmethod
+    def view_voyages(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+        try:
+            dto.cursor.execute("SELECT * FROM Voyages")
+            result = dto.cursor.fetchall()
+        except Exception as err:
+            logger.error("Error get voyages data from database")
             return None
         else:
             if result is not None:
@@ -122,11 +176,18 @@ class MySQLConnector:
                 return 0
 
     @staticmethod
-    def view_voyages(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    def view_voyages_by_user(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+        sql_request = ("SELECT Voyages.id, port_departure.port_name, port_departure.country, port_departure.city, "
+                       "port_arrival.port_name, port_arrival.country, port_arrival.city, "
+                       "Voyages.date_departure, Voyages.date_arrival, Statuses.status_name, Voyages.max_weight "
+                       "FROM Voyages "
+                       "INNER JOIN Ports port_departure ON Voyages.port_of_departure=port_departure.id "
+                       "INNER JOIN Ports port_arrival ON Voyages.port_of_arrival=port_arrival.id "
+                       "INNER JOIN Statuses ON Voyages.id_status=Statuses.id;")
         try:
-            dto.cursor.execute("SELECT * FROM Voyages")
+            dto.cursor.execute(sql_request)
             result = dto.cursor.fetchall()
-        except Exception as err:
+        except mysql.connector.errors:
             logger.error("Error get voyages data from database")
             return None
         else:
@@ -187,7 +248,6 @@ class MySQLConnector:
                 return result
             else:
                 return 0
-
 
     # admin
     @staticmethod

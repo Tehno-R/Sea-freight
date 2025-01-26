@@ -21,5 +21,5 @@ class RegexPattern:
             else:
                 return None
         except ValueError:
-            logger.error("Error checking id")
+            logger.warning("RegexChecker: Error checking id")
             return None
