@@ -4,11 +4,18 @@ from log import logger
 
 class RegexPattern:
     @staticmethod
-    def check_number(number: str) -> bool:
+    def check_number(number: str) -> str | None:
         if not isinstance(number, str):
-            return False
+            return None
         regex_pattern = re.compile(r"^\+7[0-9]{10}$")
-        return regex_pattern.match(number) is not None
+        return number if regex_pattern.match(number) is not None else None
+
+    @staticmethod
+    def date_check(date: str) -> str | None:
+        if not isinstance(date, str):
+            return None
+        regex_pattern = re.compile(r'\b\d{4}-\d{2}-\d{2}\b')
+        return date if regex_pattern.match(date) is not None else None
 
     @staticmethod
     def check_int(raw_int: str) -> int | None:

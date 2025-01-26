@@ -254,258 +254,273 @@ class MySQLConnector:
     def add_additional_services(data: tuple[str, int],
                                 dto: namedtuple('dto', ['user_id', 'connection', 'cursor'])):
         try:
-            insert_query = """INSERT INTO AdditionalServices (servic_name, price) 
+            insert_query = """INSERT INTO AdditionalServices (service_name, price) 
                                     VALUES (%s, %s) """
             dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+            dto.connection.commit()
         except mysql.connector.errors as err:
             logger.error(err)
             return False
         return True
 
     @staticmethod
-    def delete_additional_services_by_admin(data: tuple[int], dto: namedtuple('dto',['user_id',
-                                                                                     'connection', 'cursor'])):
-        try:
-            insert_query = """DELETE FROM AdditionalServices WHERE id=%s"""
-            dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
-
-            result = dto.cursor.rowcount
-            if result is None:
-                return 0
-            else:
-                return result[0]
-        except Exception as err:
-            logger.error(err)
-            return None
-
-    @staticmethod
-    def view_additional_services_by_admin(dto: namedtuple('dto',['user_id',
-                                                                 'connection', 'cursor'])):
-        try:
-            dto.cursor.execute("SELECT * FROM AdditionalServices")
-            result = dto.cursor.fetchall()
-            if result is not None:
-                return result
-            else:
-                return 0
-        except mysql.connector.errors as err:
-            logger.error("Error get additional services data from database")
-            return None
-
-    @staticmethod
-    def add_clients_by_admin(data: tuple[str, str],
-                             dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    def add_client_services(data: tuple[str, str],
+                                dto: namedtuple('dto', ['user_id', 'connection', 'cursor'])):
         try:
             insert_query = """INSERT INTO Clients (fio, number) 
                                     VALUES (%s, %s) """
             dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+            dto.connection.commit()
         except mysql.connector.errors as err:
             logger.error(err)
             return False
         return True
 
     @staticmethod
-    def delete_clients_by_admin(data: tuple[int],
-                                dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            insert_query = """DELETE FROM Clients WHERE id=%s"""
-            dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
-
-            result = dto.cursor.rowcount
-            if result is None:
-                return 0
-            else:
-                return result[0]
-        except Exception as err:
-            logger.error(err)
-            return None
-
-    @staticmethod
-    def view_clients_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            dto.cursor.execute("SELECT * FROM Clients")
-            result = dto.cursor.fetchall()
-            if result is not None:
-                return result
-            else:
-                return 0
-        except mysql.connector.errors as err:
-            logger.error("Error get clients data from database")
-            return None
-
-    @staticmethod
-    def add_ports_by_admin(data: tuple[str, str, str],
-                           dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    def add_port(data: tuple[str, str, str],
+                                dto: namedtuple('dto', ['user_id', 'connection', 'cursor'])):
         try:
             insert_query = """INSERT INTO Ports (port_name, country, city) 
-                                    VALUES (%s, %s, %s) """
+                                    VALUES (%s, %s, %s);"""
             dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+            dto.connection.commit()
         except mysql.connector.errors as err:
             logger.error(err)
             return False
         return True
 
     @staticmethod
-    def delete_ports_by_admin(data: tuple[int],
-                              dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    def add_status(data: tuple[str],
+                                dto: namedtuple('dto', ['user_id', 'connection', 'cursor'])):
         try:
-            insert_query = """DELETE FROM Ports WHERE id=%s"""
+            insert_query = """INSERT INTO Statuses (status_name) 
+                                    VALUES (%s);"""
             dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
-
-            result = dto.cursor.rowcount
-            if result is None:
-                return 0
-            else:
-                return result[0]
-        except Exception as err:
-            logger.error(err)
-            return None
-
-    @staticmethod
-    def view_ports_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            dto.cursor.execute("SELECT * FROM Ports")
-            result = dto.cursor.fetchall()
-            if result is not None:
-                return result
-            else:
-                return 0
-        except mysql.connector.errors as err:
-            logger.error("Error get clients data from database")
-            return None
-
-    @staticmethod
-    def add_statuses_by_admin(data: tuple[str],
-                              dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            insert_query = """INSERT INTO Ports (status_name) 
-                                    VALUES (%s) """
-            dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+            dto.connection.commit()
         except mysql.connector.errors as err:
             logger.error(err)
             return False
         return True
 
     @staticmethod
-    def delete_statuses_by_admin(data: tuple[int],
-                                 dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    def add_tariff(data: tuple[str, int],
+                                dto: namedtuple('dto', ['user_id', 'connection', 'cursor'])):
         try:
-            insert_query = """DELETE FROM Statuses WHERE id=%s"""
+            insert_query = """INSERT INTO Tariffs (type_of_product, price) 
+                                    VALUES (%s, %s);"""
             dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
-
-            result = dto.cursor.rowcount
-            if result is None:
-                return 0
-            else:
-                return result[0]
-        except mysql.connector.errors as err:
-            logger.error(err)
-            return None
-
-    @staticmethod
-    def view_statuses_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            dto.cursor.execute("SELECT * FROM Ports")
-            result = dto.cursor.fetchall()
-            if result is not None:
-                return result
-            else:
-                return 0
-        except mysql.connector.errors as err:
-            logger.error("Error get clients data from database")
-            return None
-
-    @staticmethod
-    def add_tariffs_by_admin(data: tuple[str, int],
-                             dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            insert_query = """INSERT INTO Ports (type_of_product, price) 
-                                    VALUES (%s, %s) """
-            dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
-        except mysql.connector.Error as err:
-            logger.error(err)
-            return False
-        return True
-
-    @staticmethod
-    def delete_tariffs_by_admin(data: tuple[int],
-                                dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            insert_query = """DELETE FROM Tariffs WHERE id=%s"""
-            dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
-
-            result = dto.cursor.rowcount
-            if result is None:
-                return 0
-            else:
-                return result[0]
-        except mysql.connector.errors as err:
-            logger.error(err)
-            return None
-
-    @staticmethod
-    def view_tariffs_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            dto.cursor.execute("SELECT * FROM Tariffs")
-            result = dto.cursor.fetchall()
-            if result is not None:
-                return result
-            else:
-                return 0
-        except mysql.connector.errors as err:
-            logger.error("Error get clients data from database")
-            return None
-
-    @staticmethod
-    def add_voyages_by_admin(data:tuple[int, int, str, str, int, int],
-                             dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            insert_query = """INSERT INTO Ports (port_of_departure, port_of_arrival, data_departure, data_arrival,
-                                                        id_status, max_weight) 
-                                VALUES (%s, %s, %s, %s, %s, %s) """
-            dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+            dto.connection.commit()
         except mysql.connector.errors as err:
             logger.error(err)
             return False
         return True
 
     @staticmethod
-    def delete_voyages_by_admin(data: tuple[int],
-                                dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    def add_voyage(data: tuple[int, int, str, str, int, int],
+                                dto: namedtuple('dto', ['user_id', 'connection', 'cursor'])):
         try:
-            insert_query = """DELETE FROM Voyages WHERE id=%s"""
+            insert_query = """INSERT INTO Voyages (port_of_departure, port_of_arrival, date_departure, date_arrival,
+            id_status, max_weight) 
+            VALUES (%s, %s, %s, %s, %s, %s);"""
             dto.cursor.execute(insert_query, data)
-            dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
-
-            result = dto.cursor.rowcount
-            if result is None:
-                return 0
-            else:
-                return result[0]
+            dto.connection.commit()
         except mysql.connector.errors as err:
             logger.error(err)
-            return None
+            return False
+        return True
 
-    @staticmethod
-    def view_voyages_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
-        try:
-            dto.cursor.execute("SELECT * FROM Voyages")
-            result = dto.cursor.fetchall()
-            if result is not None:
-                return result
-            else:
-                return 0
-        except mysql.connector.errors as err:
-            logger.error("Error get clients data from database")
-            return None
+    # @staticmethod
+    # def delete_additional_services_by_admin(data: tuple[int], dto: namedtuple('dto',['user_id',
+    #                                                                                  'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """DELETE FROM AdditionalServices WHERE id=%s"""
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #
+    #         result = dto.cursor.rowcount
+    #         if result is None:
+    #             return 0
+    #         else:
+    #             return result[0]
+    #     except Exception as err:
+    #         logger.error(err)
+    #         return None
+    #
+    # @staticmethod
+    # def view_additional_services_by_admin(dto: namedtuple('dto',['user_id',
+    #                                                              'connection', 'cursor'])):
+    #     try:
+    #         dto.cursor.execute("SELECT * FROM AdditionalServices")
+    #         result = dto.cursor.fetchall()
+    #         if result is not None:
+    #             return result
+    #         else:
+    #             return 0
+    #     except mysql.connector.errors as err:
+    #         logger.error("Error get additional services data from database")
+    #         return None
+    #
+    # @staticmethod
+    # def add_clients_by_admin(data: tuple[str, str],
+    #                          dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """INSERT INTO Clients (fio, number)
+    #                                 VALUES (%s, %s) """
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #     except mysql.connector.errors as err:
+    #         logger.error(err)
+    #         return False
+    #     return True
+    #
+    # @staticmethod
+    # def delete_clients_by_admin(data: tuple[int],
+    #                             dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """DELETE FROM Clients WHERE id=%s"""
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #
+    #         result = dto.cursor.rowcount
+    #         if result is None:
+    #             return 0
+    #         else:
+    #             return result[0]
+    #     except Exception as err:
+    #         logger.error(err)
+    #         return None
+    #
+    # @staticmethod
+    # def view_clients_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         dto.cursor.execute("SELECT * FROM Clients")
+    #         result = dto.cursor.fetchall()
+    #         if result is not None:
+    #             return result
+    #         else:
+    #             return 0
+    #     except mysql.connector.errors as err:
+    #         logger.error("Error get clients data from database")
+    #         return None
+    #
+    # @staticmethod
+    # def add_ports_by_admin(data: tuple[str, str, str],
+    #                        dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """INSERT INTO Ports (port_name, country, city)
+    #                                 VALUES (%s, %s, %s) """
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #     except mysql.connector.errors as err:
+    #         logger.error(err)
+    #         return False
+    #     return True
+    #
+    # @staticmethod
+    # def delete_ports_by_admin(data: tuple[int],
+    #                           dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """DELETE FROM Ports WHERE id=%s"""
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #
+    #         result = dto.cursor.rowcount
+    #         if result is None:
+    #             return 0
+    #         else:
+    #             return result[0]
+    #     except Exception as err:
+    #         logger.error(err)
+    #         return None
+    #
+    # @staticmethod
+    # def view_ports_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         dto.cursor.execute("SELECT * FROM Ports")
+    #         result = dto.cursor.fetchall()
+    #         if result is not None:
+    #             return result
+    #         else:
+    #             return 0
+    #     except mysql.connector.errors as err:
+    #         logger.error("Error get clients data from database")
+    #         return None
+    #
+    # @staticmethod
+    # def add_status(data: tuple[str],
+    #                           dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """INSERT INTO Ports (status_name)
+    #                                 VALUES (%s) """
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #     except mysql.connector.errors as err:
+    #         logger.error(err)
+    #         return False
+    #     return True
+    #
+    # @staticmethod
+    # def view_status(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         dto.cursor.execute("SELECT * FROM Ports")
+    #         result = dto.cursor.fetchall()
+    #         if result is not None:
+    #             return result
+    #         else:
+    #             return 0
+    #     except mysql.connector.errors as err:
+    #         logger.error("Error get clients data from database")
+    #         return None
+    #
+    # @staticmethod
+    # def add_tariffs_by_admin(data: tuple[str, int],
+    #                          dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """INSERT INTO Ports (type_of_product, price)
+    #                                 VALUES (%s, %s) """
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #     except mysql.connector.Error as err:
+    #         logger.error(err)
+    #         return False
+    #     return True
+    #
+    # @staticmethod
+    # def view_tariffs_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         dto.cursor.execute("SELECT * FROM Tariffs")
+    #         result = dto.cursor.fetchall()
+    #         if result is not None:
+    #             return result
+    #         else:
+    #             return 0
+    #     except mysql.connector.errors as err:
+    #         logger.error("Error get clients data from database")
+    #         return None
+    #
+    # @staticmethod
+    # def add_voyages_by_admin(data:tuple[int, int, str, str, int, int],
+    #                          dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         insert_query = """INSERT INTO Ports (port_of_departure, port_of_arrival, data_departure, data_arrival,
+    #                                                     id_status, max_weight)
+    #                             VALUES (%s, %s, %s, %s, %s, %s) """
+    #         dto.cursor.execute(insert_query, data)
+    #         dto: namedtuple('dto',['user_id', 'connection', 'cursor'])[0].commit()
+    #     except mysql.connector.errors as err:
+    #         logger.error(err)
+    #         return False
+    #     return True
+    #
+    # @staticmethod
+    # def view_voyages_by_admin(dto: namedtuple('dto',['user_id', 'connection', 'cursor'])):
+    #     try:
+    #         dto.cursor.execute("SELECT * FROM Voyages")
+    #         result = dto.cursor.fetchall()
+    #         if result is not None:
+    #             return result
+    #         else:
+    #             return 0
+    #     except mysql.connector.errors as err:
+    #         logger.error("Error get clients data from database")
+    #         return None
