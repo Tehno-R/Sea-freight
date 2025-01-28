@@ -10,7 +10,7 @@ class AuthApplication(MySQLConnector):
     def __init__(self):
         super().__init__()
         self.window = tk.Tk()
-        self.window.title("Log in/Sign up")
+        self.window.title("Log in")
         self.window.geometry("300x100")
         self.window.eval('tk::PlaceWindow . center')
 
@@ -19,7 +19,7 @@ class AuthApplication(MySQLConnector):
 
         self.number_field = tk.Entry(self.window, )
         self.number_field.pack()
-        self.number_field.insert(tk.END, "-000")
+        self.number_field.insert(tk.END, "+79614632626")
 
         self.log_label = None
 
@@ -59,7 +59,7 @@ class AuthApplication(MySQLConnector):
         if self._current_user == self._usernames[0]:
             AdminPanelApplication((self, "550x380"))
         else:
-            UserPanelApplication((self, "500x350"))
+            UserPanelApplication((self, "500x400"))
 
     def reopen(self):
         logger.info(f"{self._current_user} is log out")
@@ -114,7 +114,7 @@ class UserPanelApplication(PanelApplication):
         self.add_order_button = tk.Button(
             self.window,
             text="Add order",
-            width=15,
+            width=25,
             height=2,
             command=self.button_add_order_fn
         )
@@ -123,7 +123,7 @@ class UserPanelApplication(PanelApplication):
         self.delete_order_button = tk.Button(
             self.window,
             text="Delete order",
-            width=15,
+            width=25,
             height=2,
             command=self.button_delete_order_fn
         )
@@ -132,7 +132,7 @@ class UserPanelApplication(PanelApplication):
         self.view_orders_button = tk.Button(
             self.window,
             text="View orders",
-            width=15,
+            width=25,
             height=2,
             command=self.button_view_orders_fn
         )
@@ -141,7 +141,7 @@ class UserPanelApplication(PanelApplication):
         self.view_voyages_button = tk.Button(
             self.window,
             text="View voyages",
-            width=15,
+            width=25,
             height=2,
             command=self.button_view_voyages_fn
         )
@@ -150,7 +150,7 @@ class UserPanelApplication(PanelApplication):
         self.view_tariffs_button = tk.Button(
             self.window,
             text="View tariffs",
-            width=15,
+            width=25,
             height=2,
             command=self.button_view_tariffs_fn
         )
@@ -159,11 +159,20 @@ class UserPanelApplication(PanelApplication):
         self.view_additional_services_button = tk.Button(
             self.window,
             text="View additional services",
-            width=15,
+            width=25,
             height=2,
             command=self.button_view_additional_services_fn
         )
         self.view_additional_services_button.pack()
+
+        self.add_order_and_additional_service_button = tk.Button(
+            self.window,
+            text="Add order and additional service",
+            width=25,
+            height=2,
+            command=self.button_add_additional_service_fn
+        )
+        self.add_order_and_additional_service_button.pack()
 
     @PanelApplication._button_fn_dec
     def button_add_order_fn(self):
@@ -197,6 +206,11 @@ class UserPanelApplication(PanelApplication):
         self.opened_dialogue_window = ViewAdditionalServicesApplication((self.window, self.get_dto(),
                                                                          'View Additional Services', '402x600'))
 
+    @PanelApplication._button_fn_dec
+    def button_add_additional_service_fn(self):
+        self.opened_dialogue_window = AddOrderAndAdditionalServiceApplication((self.window, self.get_dto(),
+                                                                         'Add Order And Additional Service', '430x250'))
+
 
 class DialogueApplication:
     """
@@ -204,7 +218,7 @@ class DialogueApplication:
     """
 
     def __init__(self, top: tk.Toplevel,
-                 dto_object: namedtuple('dto', ['user_id', 'connection', 'cursor']),
+                 dto_object: namedtuple('dto', ['user_phone', 'connection', 'cursor']),
                  move: str = 'None',
                  window_size: str = "500x500"):
         self.window = tk.Toplevel(top)
@@ -329,7 +343,7 @@ class AddOrderApplication(DialogueApplication):
             logger.warning("Voyage id entered is invalid")
             self._bad_status()
             return
-        id_recipient = RegexPattern.check_int(self.id_recipient.get())
+        id_recipient = RegexPattern.check_number(self.id_recipient.get())
         if id_recipient is None:
             self._bad_status()
             logger.warning("Recipient id entered is invalid")
@@ -345,7 +359,7 @@ class AddOrderApplication(DialogueApplication):
             self._bad_status()
             return
 
-        result = MySQLConnector.add_order((id_voyage, self.dto.user_id, id_recipient, weight, id_tariff),
+        result = MySQLConnector.add_order((id_voyage, self.dto.user_phone, int(id_recipient[1:]), weight, id_tariff),
                                           self.dto)
         if result:
             logger.info("Order added in table")
@@ -390,7 +404,7 @@ class DeleteOrderApplication(DialogueApplication):
             self._bad_status()
             return
 
-        result = MySQLConnector.delete_order((id_order, self.dto.user_id), self.dto)
+        result = MySQLConnector.delete_order((id_order, self.dto.user_phone), self.dto)
         if result:
             logger.info("Order deleted from table")
             self._good_status()
@@ -405,7 +419,7 @@ class ViewOrdersApplication(DialogueApplication):
     str,
     str]):
         super().__init__(*application_data)
-        self.column_names = ("id", "id_voyage", "sender_fio", "sender_phone",
+        self.column_names = ("id", "id_voyage", "recipient_fio", "recipient_phone",
                              "weight", "type_of_product", "price_per_one_of_weight", "additional_services")
 
         self.print_view()
@@ -421,16 +435,22 @@ class ViewVoyagesApplication(DialogueApplication):
     str,
     str]):
         super().__init__(*application_data)
-        self.column_names = ("id",
-                             "departure_port_name", "departure_port_country", "departure_port_city",
-                             "arrival_port_name", "arrival_port_country", "arrival_port_city",
-                             "date_departure", "date_arrival",
-                             "status_name", "max_weight")
-
+        if self.dto.user_phone is not None:
+            self.column_names = ("id",
+                                 "departure_port_country", "departure_port_city",
+                                 "arrival_port_country", "arrival_port_city",
+                                 "date_departure", "date_arrival",
+                                 "status_name", "max_weight")
+        else:
+            self.column_names = ("id", "port_of_departure", "port_of_arrival",
+                                 "date_departure", "date_arrival", "id_status", "max_weight")
         self.print_view()
 
     def _prepare_data(self):
-        orders_data = MySQLConnector.view_voyages_by_user(self.dto)
+        if self.dto.user_phone is not None:
+            orders_data = MySQLConnector.view_voyages_by_user(self.dto)
+        else:
+            orders_data = MySQLConnector.view_voyages(self.dto)
         return orders_data, self.column_names
 
 
@@ -464,6 +484,60 @@ class ViewAdditionalServicesApplication(DialogueApplication):
         return orders_data, self.column_names
 
 
+class AddOrderAndAdditionalServiceApplication(DialogueApplication):
+    def __init__(self,
+                 application_data: tuple[tk.Toplevel, namedtuple('dto', ['user_id', 'connection', 'cursor']),
+                 str,
+                 str]):
+        super().__init__(*application_data)
+
+        self.label = tk.Label(self.window, text="Enter info about your order and additional service:")
+        self.label.pack()
+
+        # order info
+        self.id_order_label = tk.Label(self.window, text="Enter order id: ")
+        self.id_order = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
+        self.id_order.place(x=250, y=30)
+        self.id_order_label.place(x=145, y=32)
+
+        self.id_additional_service_label = tk.Label(self.window, text="Enter additional service id: ")
+        self.id_additional_service = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
+        self.id_additional_service.place(x=250, y=70)
+        self.id_additional_service_label.place(x=70, y=73)
+        #
+
+        self.submit_button = tk.Button(
+            self.window,
+            text="Submit",
+            width=25,
+            height=1,
+            command=self.button_submit_fn
+        )
+        self.submit_button.place(x=120, y=120)
+
+    def button_submit_fn(self):
+        # Checking to valid entered data
+        id_order = RegexPattern.check_int(self.id_order.get())
+        if id_order is None:
+            logger.warning("Order id entered is invalid")
+            self._bad_status()
+            return
+        id_additional_service = RegexPattern.check_int(self.id_additional_service.get())
+        if id_additional_service is None:
+            self._bad_status()
+            logger.warning("Additional service id entered is invalid")
+            return
+
+        result = MySQLConnector.add_order_and_additional_service((id_order, id_additional_service),
+                                          self.dto)
+        if result:
+            logger.info("Order and additional service added in table")
+            self._good_status()
+        else:
+            logger.error("Failed to add order and additional service")
+
+
+# ADMIN
 class AdminPanelApplication(PanelApplication):
     def __init__(self, app_data: tuple[AuthApplication, str]):
         super().__init__(*app_data)
@@ -488,7 +562,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.add_client_button = tk.Button(
             self.window,
-            text="Add Client service",
+            text="Add Client",
             width=15,
             height=2,
             command=self.button_add_client_fn
@@ -497,7 +571,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.view_client_button = tk.Button(
             self.window,
-            text="View Client service",
+            text="View Clients",
             width=15,
             height=2,
             command=self.button_view_client_fn
@@ -506,7 +580,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.add_port_button = tk.Button(
             self.window,
-            text="Add Port service",
+            text="Add Port",
             width=15,
             height=2,
             command=self.button_add_port_fn
@@ -515,7 +589,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.view_port_button = tk.Button(
             self.window,
-            text="Delete Port service",
+            text="View Ports",
             width=15,
             height=2,
             command=self.button_view_port_fn
@@ -524,7 +598,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.add_status_button = tk.Button(
             self.window,
-            text="Add Status service",
+            text="Add Status",
             width=15,
             height=2,
             command=self.button_add_status_fn
@@ -533,7 +607,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.view_status_button = tk.Button(
             self.window,
-            text="View Status service",
+            text="View Statuses",
             width=15,
             height=2,
             command=self.button_view_status_fn
@@ -542,7 +616,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.add_tariff_button = tk.Button(
             self.window,
-            text="Add Tariff service",
+            text="Add Tariff",
             width=15,
             height=2,
             command=self.button_add_tariff_fn
@@ -551,7 +625,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.view_tariff_button = tk.Button(
             self.window,
-            text="View Tariff service",
+            text="View Tariffs",
             width=15,
             height=2,
             command=self.button_view_tariff_fn
@@ -560,7 +634,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.add_voyage_button = tk.Button(
             self.window,
-            text="Add Voyage service",
+            text="Add Voyage",
             width=15,
             height=2,
             command=self.button_add_voyage_fn
@@ -569,7 +643,7 @@ class AdminPanelApplication(PanelApplication):
 
         self.view_voyage_button = tk.Button(
             self.window,
-            text="View Voyage service",
+            text="View Voyages",
             width=15,
             height=2,
             command=self.button_view_voyage_fn
@@ -584,7 +658,7 @@ class AdminPanelApplication(PanelApplication):
 
     @PanelApplication._button_fn_dec
     def button_view_additional_service_fn(self):
-        self.opened_dialogue_window = AddOrderApplication((self.window, self.get_dto(),
+        self.opened_dialogue_window = ViewAdditionalServiceApplication((self.window, self.get_dto(),
                                                            'View Additional Service', '500x300'))
 
     @PanelApplication._button_fn_dec
@@ -594,8 +668,8 @@ class AdminPanelApplication(PanelApplication):
 
     @PanelApplication._button_fn_dec
     def button_view_client_fn(self):
-        self.opened_dialogue_window = AddOrderApplication((self.window, self.get_dto(),
-                                                           'Add Order', '500x300'))
+        self.opened_dialogue_window = ViewClientsApplication((self.window, self.get_dto(),
+                                                           'View Clients', '500x300'))
 
     @PanelApplication._button_fn_dec
     def button_add_port_fn(self):
@@ -604,8 +678,8 @@ class AdminPanelApplication(PanelApplication):
 
     @PanelApplication._button_fn_dec
     def button_view_port_fn(self):
-        self.opened_dialogue_window = AddOrderApplication((self.window, self.get_dto(),
-                                                           'Add Order', '500x300'))
+        self.opened_dialogue_window = ViewPortsApplication((self.window, self.get_dto(),
+                                                           'View Ports', '500x300'))
 
     @PanelApplication._button_fn_dec
     def button_add_status_fn(self):
@@ -614,8 +688,8 @@ class AdminPanelApplication(PanelApplication):
 
     @PanelApplication._button_fn_dec
     def button_view_status_fn(self):
-        self.opened_dialogue_window = AddOrderApplication((self.window, self.get_dto(),
-                                                           'Add Order', '500x300'))
+        self.opened_dialogue_window = ViewStatusesApplication((self.window, self.get_dto(),
+                                                           'View Statuses', '500x300'))
 
     @PanelApplication._button_fn_dec
     def button_add_tariff_fn(self):
@@ -624,8 +698,8 @@ class AdminPanelApplication(PanelApplication):
 
     @PanelApplication._button_fn_dec
     def button_view_tariff_fn(self):
-        self.opened_dialogue_window = AddOrderApplication((self.window, self.get_dto(),
-                                                           'Add Order', '500x300'))
+        self.opened_dialogue_window = ViewTariffsApplication((self.window, self.get_dto(),
+                                                           'View Tariffs', '500x300'))
 
     @PanelApplication._button_fn_dec
     def button_add_voyage_fn(self):
@@ -634,8 +708,9 @@ class AdminPanelApplication(PanelApplication):
 
     @PanelApplication._button_fn_dec
     def button_view_voyage_fn(self):
-        self.opened_dialogue_window = AddOrderApplication((self.window, self.get_dto(),
-                                                           'Add Order', '500x300'))
+        self.opened_dialogue_window = ViewVoyagesApplication((self.window, self.get_dto(),
+                                                           'Add Order', '500x350'))
+
 
 class AddAdditionalServiceApplication(DialogueApplication):
     def __init__(self,
@@ -651,7 +726,7 @@ class AddAdditionalServiceApplication(DialogueApplication):
         self.service_name_label = tk.Label(self.window, text="Enter service name: ")
         self.service_name = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.service_name.place(x=250, y=30)
-        self.service_name_label.place(x=145, y=32)
+        self.service_name_label.place(x=110, y=32)
 
         self.service_price_label = tk.Label(self.window, text="Enter price for service: ")
         self.service_price = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
@@ -666,7 +741,7 @@ class AddAdditionalServiceApplication(DialogueApplication):
             height=1,
             command=self.button_submit_fn
         )
-        self.submit_button.place(x=120, y=200)
+        self.submit_button.place(x=120, y=120)
 
     def button_submit_fn(self):
         # Checking to valid entered data
@@ -689,6 +764,22 @@ class AddAdditionalServiceApplication(DialogueApplication):
         else:
             logger.error("Failed to add additional service")
 
+
+class ViewAdditionalServiceApplication(DialogueApplication):
+    def __init__(self, application_data: tuple[tk.Toplevel,
+    namedtuple('dto', ['user_id', 'connection', 'cursor']),
+    str,
+    str]):
+        super().__init__(*application_data)
+        self.column_names = ("id", "service_name", "price")
+
+        self.print_view()
+
+    def _prepare_data(self):
+        orders_data = MySQLConnector.view_additional_services(self.dto)
+        return orders_data, self.column_names
+
+
 class AddClientApplication(DialogueApplication):
     def __init__(self,
                  application_data: tuple[tk.Toplevel, namedtuple('dto', ['user_id', 'connection', 'cursor']),
@@ -708,7 +799,7 @@ class AddClientApplication(DialogueApplication):
         self.client_number_label = tk.Label(self.window, text="Enter client number: ")
         self.client_number = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.client_number.place(x=250, y=70)
-        self.client_number_label.place(x=100, y=73)
+        self.client_number_label.place(x=120, y=73)
         #
 
         self.submit_button = tk.Button(
@@ -718,7 +809,7 @@ class AddClientApplication(DialogueApplication):
             height=1,
             command=self.button_submit_fn
         )
-        self.submit_button.place(x=120, y=200)
+        self.submit_button.place(x=120, y=120)
 
     def button_submit_fn(self):
         # Checking to valid entered data
@@ -741,6 +832,22 @@ class AddClientApplication(DialogueApplication):
         else:
             logger.error("Failed to add additional service")
 
+
+class ViewClientsApplication(DialogueApplication):
+    def __init__(self, application_data: tuple[tk.Toplevel,
+    namedtuple('dto', ['user_id', 'connection', 'cursor']),
+    str,
+    str]):
+        super().__init__(*application_data)
+        self.column_names = ("id", "fio", "number")
+
+        self.print_view()
+
+    def _prepare_data(self):
+        orders_data = MySQLConnector.view_clients(self.dto)
+        return orders_data, self.column_names
+
+
 class AddPortApplication(DialogueApplication):
     def __init__(self,
                  application_data: tuple[tk.Toplevel, namedtuple('dto', ['user_id', 'connection', 'cursor']),
@@ -755,17 +862,17 @@ class AddPortApplication(DialogueApplication):
         self.port_name_label = tk.Label(self.window, text="Enter port name: ")
         self.port_name = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.port_name.place(x=250, y=30)
-        self.port_name_label.place(x=145, y=32)
+        self.port_name_label.place(x=130, y=32)
 
         self.country_label = tk.Label(self.window, text="Enter port country: ")
         self.country = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.country.place(x=250, y=70)
-        self.country_label.place(x=100, y=73)
+        self.country_label.place(x=120, y=73)
 
         self.city_label = tk.Label(self.window, text="Enter port city: ")
         self.city = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.city.place(x=250, y=110)
-        self.city_label.place(x=100, y=114)
+        self.city_label.place(x=150, y=114)
         #
 
         self.submit_button = tk.Button(
@@ -775,7 +882,7 @@ class AddPortApplication(DialogueApplication):
             height=1,
             command=self.button_submit_fn
         )
-        self.submit_button.place(x=120, y=200)
+        self.submit_button.place(x=120, y=150)
 
     def button_submit_fn(self):
         # Checking to valid entered data
@@ -803,6 +910,22 @@ class AddPortApplication(DialogueApplication):
         else:
             logger.error("Failed to add port")
 
+
+class ViewPortsApplication(DialogueApplication):
+    def __init__(self, application_data: tuple[tk.Toplevel,
+    namedtuple('dto', ['user_id', 'connection', 'cursor']),
+    str,
+    str]):
+        super().__init__(*application_data)
+        self.column_names = ("id", "port_name", "country", "city")
+
+        self.print_view()
+
+    def _prepare_data(self):
+        orders_data = MySQLConnector.view_ports(self.dto)
+        return orders_data, self.column_names
+
+
 class AddStatusApplication(DialogueApplication):
     def __init__(self,
                  application_data: tuple[tk.Toplevel, namedtuple('dto', ['user_id', 'connection', 'cursor']),
@@ -817,7 +940,7 @@ class AddStatusApplication(DialogueApplication):
         self.status_name_label = tk.Label(self.window, text="Enter status name: ")
         self.status_name = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.status_name.place(x=250, y=30)
-        self.status_name_label.place(x=145, y=32)
+        self.status_name_label.place(x=115, y=32)
         #
 
         self.submit_button = tk.Button(
@@ -827,7 +950,7 @@ class AddStatusApplication(DialogueApplication):
             height=1,
             command=self.button_submit_fn
         )
-        self.submit_button.place(x=120, y=200)
+        self.submit_button.place(x=120, y=80)
 
     def button_submit_fn(self):
         # Checking to valid entered data
@@ -845,6 +968,22 @@ class AddStatusApplication(DialogueApplication):
         else:
             logger.error("Failed to add status")
 
+
+class ViewStatusesApplication(DialogueApplication):
+    def __init__(self, application_data: tuple[tk.Toplevel,
+    namedtuple('dto', ['user_id', 'connection', 'cursor']),
+    str,
+    str]):
+        super().__init__(*application_data)
+        self.column_names = ("id", "status_name")
+
+        self.print_view()
+
+    def _prepare_data(self):
+        orders_data = MySQLConnector.view_statuses(self.dto)
+        return orders_data, self.column_names
+
+
 class AddTariffApplication(DialogueApplication):
     def __init__(self,
                  application_data: tuple[tk.Toplevel, namedtuple('dto', ['user_id', 'connection', 'cursor']),
@@ -856,15 +995,15 @@ class AddTariffApplication(DialogueApplication):
         self.label.pack()
 
         # order info
-        self.type_product_label = tk.Label(self.window, text="Enter type of product name: ")
+        self.type_product_label = tk.Label(self.window, text="Enter type of product: ")
         self.type_product = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.type_product.place(x=250, y=30)
-        self.type_product_label.place(x=145, y=32)
+        self.type_product_label.place(x=90, y=32)
 
-        self.price_label = tk.Label(self.window, text="Enter price name: ")
+        self.price_label = tk.Label(self.window, text="Enter tariff price: ")
         self.price = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.price.place(x=250, y=70)
-        self.price_label.place(x=145, y=72)
+        self.price_label.place(x=120, y=72)
         #
 
         self.submit_button = tk.Button(
@@ -874,7 +1013,7 @@ class AddTariffApplication(DialogueApplication):
             height=1,
             command=self.button_submit_fn
         )
-        self.submit_button.place(x=120, y=200)
+        self.submit_button.place(x=120, y=120)
 
     def button_submit_fn(self):
         # Checking to valid entered data
@@ -897,6 +1036,7 @@ class AddTariffApplication(DialogueApplication):
         else:
             logger.error("Failed to add tariff")
 
+
 class AddVoyageApplication(DialogueApplication):
     def __init__(self,
                  application_data: tuple[tk.Toplevel, namedtuple('dto', ['user_id', 'connection', 'cursor']),
@@ -911,22 +1051,22 @@ class AddVoyageApplication(DialogueApplication):
         self.port_departure_label = tk.Label(self.window, text="Enter port departure id: ")
         self.port_departure = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.port_departure.place(x=250, y=30)
-        self.port_departure_label.place(x=145, y=32)
+        self.port_departure_label.place(x=90, y=32)
 
         self.port_arrival_label = tk.Label(self.window, text="Enter port arrival id: ")
         self.port_arrival = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.port_arrival.place(x=250, y=70)
-        self.port_arrival_label.place(x=145, y=72)
+        self.port_arrival_label.place(x=115, y=72)
 
         self.departure_date_label = tk.Label(self.window, text="Enter departure date: ")
         self.departure_date = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.departure_date.place(x=250, y=110)
-        self.departure_date_label.place(x=145, y=114)
+        self.departure_date_label.place(x=105, y=114)
 
         self.arrival_date_label = tk.Label(self.window, text="Enter arrival date: ")
         self.arrival_date = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.arrival_date.place(x=250, y=150)
-        self.arrival_date_label.place(x=145, y=154)
+        self.arrival_date_label.place(x=130, y=154)
 
         self.status_id_label = tk.Label(self.window, text="Enter status id: ")
         self.status_id = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
@@ -936,7 +1076,7 @@ class AddVoyageApplication(DialogueApplication):
         self.max_weight_label = tk.Label(self.window, text="Enter max weight: ")
         self.max_weight = tk.Entry(self.window, width=10, borderwidth=5, justify='center')
         self.max_weight.place(x=250, y=240)
-        self.max_weight_label.place(x=145, y=248)
+        self.max_weight_label.place(x=125, y=248)
         #
 
         self.submit_button = tk.Button(
